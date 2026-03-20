@@ -70,7 +70,7 @@ quickapp/
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/quickupload.git
+git clone https://github.com/dollyna26/quickupload.git
 cd quickupload
 ```
 
