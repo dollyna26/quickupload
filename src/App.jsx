@@ -15,7 +15,7 @@ const ACCEPTED = {
 const ACCEPT_STR = Object.keys(ACCEPTED).join(",");
 const fmtSize = b =>
   b < 1024 ? `${b} B` : b < 1048576 ? `${(b/1024).toFixed(1)} KB` : `${(b/1048576).toFixed(1)} MB`;
-const API = "http://localhost:5000/api/files";
+const API = "https://quickupload-backend.onrender.com";
 
 // ── Real upload to Multer backend ──
 function uploadToServer(stagedFile, onProgress) {
