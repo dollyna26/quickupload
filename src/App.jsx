@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from "react";
-
+import axios from 'axios'
 const ACCEPTED = {
   "image/jpeg":   { ext:"JPG",  icon:"🖼️",  color:"#E86519" },
   "image/png":    { ext:"PNG",  icon:"🖼️",  color:"#E86519" },
@@ -17,32 +17,36 @@ const fmtSize = b =>
   b < 1024 ? `${b} B` : b < 1048576 ? `${(b/1024).toFixed(1)} KB` : `${(b/1048576).toFixed(1)} MB`;
 const API = "https://quickupload-backend.onrender.com";
 
-// ── Real upload to Multer backend ──
+// Upload file to server
 function uploadToServer(stagedFile, onProgress) {
-  return new Promise((resolve, reject) => {
-    const formData = new FormData();
-    formData.append("file", stagedFile.rawFile);
 
-    const xhr = new XMLHttpRequest();
-    xhr.open("POST", `${API}/api/upload`);
+  // Create form data
+  const formData = new FormData();
+  formData.append("file", stagedFile.rawFile);
 
-    xhr.upload.onprogress = (e) => {
-      if (e.lengthComputable) {
-        const percent = Math.round((e.loaded / e.total) * 100);
-        onProgress(percent);
-      }
-    };
+  // Send request using axios
+  return axios.post(`${API}/api/upload`, formData, {
 
-    xhr.onload = () => {
-      if (xhr.status === 200) {
-        resolve(JSON.parse(xhr.responseText));
-      } else {
-        reject(new Error("Upload failed"));
-      }
-    };
+    // Required for file upload
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
 
-    xhr.onerror = () => reject(new Error("Network error — is server running?"));
-    xhr.send(formData);
+    // Track upload progress
+    onUploadProgress: (progressEvent) => {
+      const percent = Math.round(
+        (progressEvent.loaded * 100) / progressEvent.total
+      );
+      onProgress(percent);
+    },
+
+  })
+  .then(res => res.data) // return backend response
+  .catch(err => {
+    // Handle error
+    throw new Error(
+      err.response?.data?.error || "Upload failed"
+    );
   });
 }
 
@@ -293,7 +297,7 @@ export default function QuickUpload() {
     try {
       const res  = await fetch(`${API}/api/files`);
       const data = await res.json();
-      setServerFiles(data.files || []);
+      setServerFiles(data);
       setShowServer(true);
     } catch {
       alert("Server se connect nahi ho paya! Kya server chal raha hai?");
@@ -322,7 +326,7 @@ export default function QuickUpload() {
     })
     .then(res => {
       setFiles(p=>p.map(x=>x.id===toUpload.id
-        ? {...x, progress:100, serverUrl:res.file.url}
+        ? {...x, progress:100, serverUrl:res.url}
         : x
       ));
     })
